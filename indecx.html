@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software Project Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .chart-container { position: relative; width: 100%; height: 350px; }
+        .kpi-card { background-color: white; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); padding: 1.5rem; text-align: center; }
+        #form-message, #error-message { display: none; }
+        /* Brilliant Blues Palette */
+        :root { --c-primary: #0377a8; --c-secondary: #0492c2; --c-accent1: #89cff0; --c-accent2: #add8e6; --c-dark: #003366; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-[var(--c-dark)]">Software Project Dashboard</h1>
+            <p class="text-lg text-gray-600 mt-2">Manage and visualize your company's projects in real-time.</p>
+        </header>
+        
+        <div id="error-message" class="mb-4 p-4 rounded-md bg-red-100 text-red-800"></div>
+
+        <!-- Add Project Form -->
+        <section class="mb-12 bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-[var(--c-primary)] mb-4">Add New Project</h2>
+            <form id="add-project-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="md:col-span-2 lg:col-span-1">
+                    <label for="ProjectName" class="block text-sm font-medium text-gray-700">Project Name</label>
+                    <input type="text" id="ProjectName" required class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-[var(--c-primary)] focus:ring-[var(--c-primary)]">
+                </div>
+                <div>
+                    <label for="ClientName" class="block text-sm font-medium text-gray-700">Client Name</label>
+                    <input type="text" id="ClientName" required class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                 <div class="md:col-span-2 lg:col-span-3">
+                    <label for="Description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea id="Description" rows="2" class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm"></textarea>
+                </div>
+                <div>
+                    <label for="DueDate" class="block text-sm font-medium text-gray-700">Due Date</label>
+                    <input type="date" id="DueDate" required class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label for="Price" class="block text-sm font-medium text-gray-700">Price (USD)</label>
+                    <input type="number" id="Price" step="0.01" required class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+                <div>
+                    <label for="Status" class="block text-sm font-medium text-gray-700">Status</label>
+                    <select id="Status" class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm">
+                        <option>Pending</option>
+                        <option>In Progress</option>
+                        <option>Completed</option>
+                        <option>Cancelled</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="Assets" class="block text-sm font-medium text-gray-700">Assets (comma-separated)</label>
+                    <input type="text" id="Assets" class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., Source Code, UI Mockups">
+                </div>
+                <div class="flex items-end">
+                     <button type="submit" id="submit-button" class="w-full text-white bg-[var(--c-primary)] hover:bg-[var(--c-dark)] font-medium rounded-lg text-sm px-5 py-2.5 text-center">Add Project</button>
+                </div>
+            </form>
+            <div id="form-message" class="mt-4 p-3 rounded-md text-sm"></div>
+        </section>
+
+        <!-- KPIs Section -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="kpi-card"><h3 class="text-lg font-semibold text-gray-500">Total Revenue</h3><p id="kpi-revenue" class="text-4xl font-bold text-[var(--c-primary)]">...</p></div>
+            <div class="kpi-card"><h3 class="text-lg font-semibold text-gray-500">Total Projects</h3><p id="kpi-total-projects" class="text-4xl font-bold text-[var(--c-secondary)]">...</p></div>
+            <div class="kpi-card"><h3 class="text-lg font-semibold text-gray-500">In Progress</h3><p id="kpi-in-progress" class="text-4xl font-bold text-[var(--c-accent1)]">...</p></div>
+            <div class="kpi-card"><h3 class="text-lg font-semibold text-gray-500">Completed</h3><p id="kpi-completed" class="text-4xl font-bold text-green-500">...</p></div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-xl font-bold text-[var(--c-dark)] mb-4">Projects by Status</h3>
+                <div class="chart-container"><canvas id="statusChart"></canvas></div>
+            </div>
+            <div class="lg:col-span-3 bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-xl font-bold text-[var(--c-dark)] mb-4">Monthly Revenue (Completed Projects)</h3>
+                <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+            </div>
+        </section>
+        
+        <!-- Project Table -->
+        <section class="bg-white p-6 rounded-lg shadow-lg">
+             <h2 class="text-2xl font-bold text-[var(--c-primary)] mb-4">All Projects</h2>
+             <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Project Name</th>
+                            <th scope="col" class="px-6 py-3">Client</th>
+                            <th scope="col" class="px-6 py-3">Due Date</th>
+                            <th scope="col" class="px-6 py-3">Price</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projects-table-body">
+                        <!-- Rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+             </div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- CONFIGURATION ---
+            // PASTE YOUR NEW WEB APP URL HERE
+            const webAppUrl = 'PASTE_YOUR_WEB_APP_URL_HERE';
+
+            const form = document.getElementById('add-project-form');
+            const submitButton = document.getElementById('submit-button');
+            const formMessage = document.getElementById('form-message');
+            const errorMessage = document.getElementById('error-message');
+            let chartInstances = {};
+
+            function showMessage(element, message, isError = false) {
+                element.textContent = message;
+                element.className = `mt-4 p-4 rounded-md ${isError ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`;
+                element.style.display = 'block';
+                setTimeout(() => { element.style.display = 'none'; }, 5000);
+            }
+
+            function fetchAndRender() {
+                if (webAppUrl === 'PASTE_YOUR_WEB_APP_URL_HERE') {
+                    showMessage(errorMessage, 'Configuration needed: Please paste your Web App URL into the HTML file.', true);
+                    return;
+                }
+                
+                fetch(webAppUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Network response was not ok. Check script deployment permissions.");
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.error) throw new Error(data.error);
+                        errorMessage.style.display = 'none';
+                        processAndRenderData(data);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                        showMessage(errorMessage, `Failed to load data: ${error.message}`, true);
+                    });
+            }
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+
+                const projectData = {};
+                form.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (el.id) {
+                        projectData[el.id] = el.value;
+                    }
+                });
+
+                fetch(webAppUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(projectData),
+                    headers: { 'Content-Type': 'application/json' },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showMessage(formMessage, 'Project added successfully! Refreshing...', false);
+                        form.reset();
+                        fetchAndRender(); // Re-fetch data to update the UI
+                    } else {
+                        throw new Error(data.message || 'Unknown error occurred.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error submitting form:', error);
+                    showMessage(formMessage, `Error: ${error.message}`, true);
+                })
+                .finally(() => {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Add Project';
+                });
+            });
+
+            function processAndRenderData(data) {
+                Object.values(chartInstances).forEach(chart => chart.destroy());
+
+                // KPIs
+                const completedProjects = data.filter(p => p.Status === 'Completed');
+                const totalRevenue = completedProjects.reduce((sum, p) => sum + (parseFloat(p.Price) || 0), 0);
+                document.getElementById('kpi-revenue').textContent = `$${totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+                document.getElementById('kpi-total-projects').textContent = data.length;
+                document.getElementById('kpi-in-progress').textContent = data.filter(p => p.Status === 'In Progress').length;
+                document.getElementById('kpi-completed').textContent = completedProjects.length;
+
+                // Project Status Chart
+                const statusCounts = data.reduce((acc, p) => { acc[p.Status] = (acc[p.Status] || 0) + 1; return acc; }, {});
+                renderChart('statusChart', 'doughnut', statusCounts, 'Projects');
+
+                // Monthly Revenue Chart
+                const monthlyRevenue = completedProjects.reduce((acc, p) => {
+                    const month = new Date(p.DueDate).toLocaleString('default', { month: 'short', year: '2-digit' });
+                    acc[month] = (acc[month] || 0) + (parseFloat(p.Price) || 0);
+                    return acc;
+                }, {});
+                renderChart('revenueChart', 'bar', monthlyRevenue, 'Revenue');
+                
+                // Populate Table
+                const tableBody = document.getElementById('projects-table-body');
+                tableBody.innerHTML = '';
+                if (data.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4">No projects found. Add one using the form above!</td></tr>`;
+                } else {
+                    data.sort((a, b) => new Date(b.OrderDate) - new Date(a.OrderDate)).forEach(p => {
+                        const row = `
+                            <tr class="bg-white border-b hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">${p.ProjectName || 'N/A'}</td>
+                                <td class="px-6 py-4">${p.ClientName || 'N/A'}</td>
+                                <td class="px-6 py-4">${p.DueDate ? new Date(p.DueDate).toLocaleDateString() : 'N/A'}</td>
+                                <td class="px-6 py-4">$${(parseFloat(p.Price) || 0).toLocaleString()}</td>
+                                <td class="px-6 py-4"><span class="px-2 py-1 font-semibold leading-tight text-xs rounded-full ${
+                                    p.Status === 'Completed' ? 'bg-green-100 text-green-800' :
+                                    p.Status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                                    p.Status === 'Cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                }">${p.Status || 'N/A'}</span></td>
+                            </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                }
+            }
+            
+            function renderChart(canvasId, type, data, label) {
+                const colors = { primary: '#0377a8', secondary: '#0492c2', accent1: '#89cff0', accent2: '#add8e6', dark: '#003366' };
+                const chartColors = [colors.primary, colors.secondary, colors.accent1, colors.accent2];
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                chartInstances[canvasId] = new Chart(ctx, {
+                    type,
+                    data: { labels: Object.keys(data), datasets: [{ label, data: Object.values(data), backgroundColor: chartColors }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            fetchAndRender();
+        });
+    </script>
+</body>
+</html>
